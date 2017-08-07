@@ -5,6 +5,7 @@ import (
 	"os"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
@@ -18,6 +19,42 @@ type Configuration struct {
 	Port string
 	User string
 	Password string
+}
+
+type Article struct {
+	Id      int
+	Title   string
+	Content string
+	Time    time.Time
+}
+
+type JsonErr struct {
+	Code int
+	Text string
+}
+
+type GetRequest struct {
+	Title   string
+	Content string
+	Tag     []int
+}
+
+type PostRequest struct {
+	Id 		int
+	Title   string
+	Content string
+	Tag     []int
+}
+
+type JsonOk struct {
+	Code int
+	Text string
+}
+
+type GetOk struct {
+	Code int
+	Text string
+	Body interface{}
 }
 
 func CheckError(err error) {
