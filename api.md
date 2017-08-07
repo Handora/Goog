@@ -20,10 +20,9 @@ response:
 
 Article struct:
 {
-	id      int        // sql id，可能无用
+	id      int        // sql id
 	title   string     // 标题
 	content string     //文章内容
-	tag     []string   // tags of article, may be one
 	time    time.Time  //yyyy-mm-dd hh:mm:ss
     // 类似sql里面的datetime数据类型。
 }
@@ -48,10 +47,9 @@ Article struct:
 
     Article struct:
     {
-        id      int        // sql id，可能无用
+        id      int        // sql id
         title   string     // 标题
         content string     //文章内容
-        tag     []string   // tags of article, may be one
         time    time.Time  //yyyy-mm-dd hh:mm:ss
         // 类似sql里面的datetime数据类型。
     }
@@ -80,7 +78,6 @@ Article struct:
         id      int        // sql id，可能无用
         title   string     // 标题
         content string     //文章内容
-        tag     []string   // tags of article, may be one
         time    time.Time  //yyyy-mm-dd hh:mm:ss
         // 类似sql里面的datetime数据类型。
     }
