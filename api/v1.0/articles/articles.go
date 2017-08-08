@@ -5,16 +5,28 @@ import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"strconv"
 )
 
 const PERPAGE int = 20
 
 
-func GetArticles(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func GetArticles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// get the page argument for pagination
-	page := int(ps.ByName("page"))
+	pages := r.URL.Query()["page"]
+	var (
+		page int
+		err  error
+	)
+	if len(pages) > 0 {
+		page, err = strconv.Atoi(pages[0])
+		util.CheckError(err)
+	} else {
+		page = 1
+	}
 
-	stmt, err := util.Db.Prepare("SELECT * FROM Article LIMIT ?, ? BY time DESC")
+
+	stmt, err := util.Db.Prepare("SELECT * FROM Article ORDER BY time DESC LIMIT ?, ?")
 	util.CheckError(err)
 
 	rows, err := stmt.Query((page-1)*PERPAGE, page*PERPAGE)
@@ -41,15 +53,26 @@ func GetArticles(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	}
 }
 
-func GetArticleByTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
-	id := int(ps.ByName("id"))
-	page := int(ps.ByName("page"))
-
-	stmt, err := util.Db.Prepare("select Article.* from Article,ATrelation " +
-		"where ATrelation.tid=? and ATrelation.aid=Article.id limit ?, ? BY time DESC")
+func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckError(err)
 
-	rows, err := stmt.Query(id, (page-1)*PERPAGE, (page-1)*PERPAGE)
+	pages := r.URL.Query()["page"]
+	var (
+		page int
+	)
+	if len(pages) > 0 {
+		page, err = strconv.Atoi(pages[0])
+		util.CheckError(err)
+	} else {
+		page = 1
+	}
+
+	stmt, err := util.Db.Prepare("select Article.* from Article,ATrelation " +
+		"where ATrelation.tid=? and ATrelation.aid=Article.id ORDER BY time DESC limit ?, ?")
+	util.CheckError(err)
+
+	rows, err := stmt.Query(id, (page-1)*PERPAGE, (page)*PERPAGE)
 	util.CheckError(err)
 
 	var (
@@ -75,7 +98,8 @@ func GetArticleByTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Param
 
 func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	// get the page argument for pagination
-	id := int(ps.ByName("id"))
+	id, err := strconv.Atoi(ps.ByName("id"))
+	util.CheckError(err)
 
 	var article util.Article
 
@@ -89,7 +113,6 @@ func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	for tags.Next() {
 		var tag string
 		tags.Scan(&tag)
-		article.Tag = append(article.Tag, tag)
 	}
 
 	tags.Close()
@@ -102,7 +125,7 @@ func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 
 	ok := false
 
-	for rows.Next {
+	for rows.Next() {
 		ok = true
 		rows.Scan(&article.Id, &article.Title, &article.Content, &article.Time)
 	}
@@ -124,7 +147,6 @@ func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 }
 
 func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
 	rb := util.GetRequest{}
 	json.NewDecoder(r.Body).Decode(&rb)
 
@@ -140,7 +162,7 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// TODO:
 	//      There may be some improvement through
 	//		adding cache for tags
-	for i := range rb.Tag {
+	for _, i := range rb.Tag {
 		stmt, err = util.Db.Prepare("select name from Tag where id=?")
 		util.CheckError(err)
 
@@ -165,26 +187,29 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
-func UpdateArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	postRequest := util.PostRequest{}
+func UpdateArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
+	util.CheckError(err)
+
+	postRequest := util.GetRequest{}
 	json.NewDecoder(r.Body).Decode(&postRequest)
 
 	stmt, err := util.Db.Prepare("update Article set title=?,content=?,time=NOW() where id=?")
 	util.CheckError(err)
 
-	_, err = stmt.Exec(postRequest.Title, postRequest.Content, postRequest.Id)
+	_, err = stmt.Exec(postRequest.Title, postRequest.Content, id)
 	util.CheckError(err)
 
 	stmt, err = util.Db.Prepare("delete from ATrelation where aid=?")
 	util.CheckError(err)
 
-	_, err = stmt.Exec(postRequest.Id)
+	_, err = stmt.Exec(id)
 	util.CheckError(err)
 
 	// TODO:
 	//      There may be some improvement through
 	//		adding cache for tags
-	for i := range postRequest.Tag {
+	for _, i := range postRequest.Tag {
 		stmt, err = util.Db.Prepare("select name from Tag where id=?")
 		util.CheckError(err)
 
@@ -197,7 +222,7 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		stmt, err = util.Db.Prepare("INSERT ATrelation SET aid=?,tid=?")
 		util.CheckError(err)
 
-		_, err = stmt.Exec(postRequest.Id, i)
+		_, err = stmt.Exec(id, i)
 		util.CheckError(err)
 	}
 
@@ -210,9 +235,9 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 }
 
-func DeleteArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var id int
-	json.NewDecoder(r.Body).Decode(&id)
+func DeleteArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
+	util.CheckError(err)
 
 	stmt, err := util.Db.Prepare("delete from Article where id=?")
 	util.CheckError(err)

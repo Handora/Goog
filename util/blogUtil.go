@@ -28,6 +28,11 @@ type Article struct {
 	Time    time.Time
 }
 
+type Tag struct {
+	Id int
+	Name string
+}
+
 type JsonErr struct {
 	Code int
 	Text string
