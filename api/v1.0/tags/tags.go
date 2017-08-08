@@ -53,7 +53,6 @@ func GetTags(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	for rows.Next() {
 		err := rows.Scan(&tag.Id, &tag.Name)
 		util.CheckError(err)
-
 		tags = append(tags, tag)
 	}
 
@@ -65,7 +64,7 @@ func GetTags(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	}
 }
 
-func GetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	var (
 		id int
 		tag util.Tag
@@ -121,7 +120,7 @@ func PostTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
-func DeleteTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	id, err := strconv.Atoi(ps.ByName("id"))
 
 	stmt, err := util.Db.Prepare("delete from Tag where id=?")

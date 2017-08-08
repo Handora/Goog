@@ -150,6 +150,8 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	rb := util.GetRequest{}
 	json.NewDecoder(r.Body).Decode(&rb)
 
+	defer r.Body.Close()
+
 	stmt, err := util.Db.Prepare("insert Article SET title=?,content=?,time=NOW()")
 	util.CheckError(err)
 
