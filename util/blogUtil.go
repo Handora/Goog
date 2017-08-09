@@ -61,8 +61,8 @@ func CheckError(err error) {
 	}
 }
 
-func DbInit() {
-	file, err := os.Open("config.json")
+func DbInit(conf string) {
+	file, err := os.Open(conf)
 	CheckError(err)
 	decoder := json.NewDecoder(file)
 	config := Configuration{}

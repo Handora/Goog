@@ -7,10 +7,20 @@ import (
 	"blog/api/v1.0/tags"
 	"log"
 	"net/http"
+	"flag"
+	"fmt"
+	"os"
 )
 
 func main() {
-	util.DbInit()
+	config := flag.String("config", "", "must be a config json file")
+
+	if len(*config) == 0 {
+		fmt.Println("Usage: blog -config={config.json}")
+		os.Exit(1)
+	}
+
+	util.DbInit(*config)
 
 	defer util.Db.Close()
 
