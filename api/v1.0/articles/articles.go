@@ -10,7 +10,6 @@ import (
 
 const PERPAGE int = 20
 
-
 func GetArticles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// get the page argument for pagination
 	pages := r.URL.Query()["page"]

@@ -44,13 +44,6 @@ type GetRequest struct {
 	Tag     []int
 }
 
-type PostRequest struct {
-	Id 		int
-	Title   string
-	Content string
-	Tag     []int
-}
-
 type JsonOk struct {
 	Code int
 	Text string
