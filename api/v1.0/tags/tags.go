@@ -6,139 +6,176 @@ import (
 	"blog/util"
 	"encoding/json"
 	"strconv"
+	"database/sql"
 )
 
-func GetTagByArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
-	id, err := strconv.Atoi(ps.ByName("id"))
-	util.CheckError(err)
 
+/*
+	TODO:
+	May be we can create an Article id list to
+	return tag, and it may be more effective
+*/
+func GetTagByArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+	// get article id from request
+	id, err := strconv.Atoi(ps.ByName("id"))
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
+
+	// select all corresponding Tag structure using
+	// ATrelation Table and Tag Table with id from request
 	stmt, err := util.Db.Prepare("select Tag.* from Tag,ATrelation " +
 		"where ATrelation.aid=? and ATrelation.tid=Tag.id")
-	util.CheckError(err)
-
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+	// query
 	rows, err := stmt.Query(id)
-	util.CheckError(err)
-
-	var (
-		tag util.Tag
-		tags []util.Tag
-	)
-
-	for rows.Next() {
-		err := rows.Scan(&tag.Id, &tag.Name)
-		util.CheckError(err)
-
-		tags = append(tags, tag)
-	}
-
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 	defer rows.Close()
 
+	var (
+		tag util.Tag
+		tags []util.Tag
+	)
+
+	// construct the tags
+	for rows.Next() {
+		err := rows.Scan(&tag.Id, &tag.Name)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+		tags = append(tags, tag)
+	}
+
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(util.GetOk{Code:http.StatusOK, Text: "Get tags ok", Body: tags}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "GET tags through article id successfully", Body: tags}); err != nil {
 		panic(err)
 	}
 }
 
-func GetTags(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func GetTags(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+	// query all tags from db
 	rows, err := util.Db.Query("select * from Tag")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+	defer rows.Close()
 
 	var (
 		tag util.Tag
 		tags []util.Tag
 	)
 
+	// fill the tags structure
 	for rows.Next() {
 		err := rows.Scan(&tag.Id, &tag.Name)
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
 		tags = append(tags, tag)
 	}
 
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(util.GetOk{Code:http.StatusOK, Text: "Get tags ok", Body: tags}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "Get all tags successfully", Body: tags}); err != nil {
 		panic(err)
 	}
 }
 
+
+/*
+	TODO:
+	May be we can create a Tag id list to
+	return tag, and it may be more effective
+*/
 func GetTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	var (
 		id int
 		tag util.Tag
 	)
 
+	// get id from url and convert it to int
 	id, err := strconv.Atoi(ps.ByName("id"))
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
+	// select corresponding Tg
 	stmt, err := util.Db.Prepare("select * from Tag where id=?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
+	// just find one row, because id is unique
 	row := stmt.QueryRow(id)
 
 	err = row.Scan(&tag.Id, &tag.Name)
 
-	if err != nil {
+	if err == sql.ErrNoRows {
+		// not found, set the header, and write the statusNotFound with body
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
-
-		if err := json.NewEncoder(w).Encode(util.JsonErr{Code:http.StatusNotFound, Text: "Tag not foynd"}); err != nil {
+		if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusNotFound, Text: "Tag not found"}); err != nil {
 			panic(err)
 		}
-	} else {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-
-		if err := json.NewEncoder(w).Encode(util.GetOk{Code: http.StatusOK, Text: "Get tags ok", Body: tag}); err != nil {
-			panic(err)
-		}
+		return
+	} else if err != nil {
+		// other error
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+		return
 	}
-}
 
-func PostTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tag := struct {
-		Name string
-	}{}
-
-	json.NewDecoder(r.Body).Decode(&tag)
-
-	defer r.Body.Close()
-
-	stmt, err := util.Db.Prepare("insert Tag SET name=?")
-	util.CheckError(err)
-
-	_, err = stmt.Exec(tag.Name)
-	util.CheckError(err)
-
+	// err == nil
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(util.JsonOk{Code: http.StatusOK, Text: "Post tag ok"}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get tags ok", Body: tag}); err != nil {
 		panic(err)
 	}
 }
 
-func DeleteTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
-	id, err := strconv.Atoi(ps.ByName("id"))
+func PostTag(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	tag := struct {
+		Name string
+	}{}
 
-	stmt, err := util.Db.Prepare("delete from Tag where id=?")
-	util.CheckError(err)
+	// read the request body to tag structure
+	json.NewDecoder(r.Body).Decode(&tag)
+	defer r.Body.Close()
 
-	_, err = stmt.Exec(id)
-	util.CheckError(err)
+	// insert it
+	stmt, err := util.Db.Prepare("insert Tag SET name=?")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	stmt, err = util.Db.Prepare("delete from ATrelation where tid=?")
-	util.CheckError(err)
+	_, err = stmt.Exec(tag.Name)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
-	_, err = stmt.Exec(id)
-	util.CheckError(err)
-
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Post tag ok"}); err != nil {
+		panic(err)
+	}
+}
 
-	if err := json.NewEncoder(w).Encode(util.JsonOk{Code: http.StatusOK, Text: "DELETE tags ok"}); err != nil {
+
+/*
+	TODO:
+	May be we can create an tag id list to
+	delete all, and it may be more effective
+ */
+func DeleteTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+	// read id from request
+	id, err := strconv.Atoi(ps.ByName("id"))
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
+
+	// delete the tag
+	stmt, err := util.Db.Prepare("delete from Tag where id=?")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+	_, err = stmt.Exec(id)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
+
+	stmt, err = util.Db.Prepare("delete from ATrelation where tid=?")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+	_, err = stmt.Exec(id)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
+
+	// set the header, and write the statusOK with body
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "DELETE tags ok"}); err != nil {
 		panic(err)
 	}
 }

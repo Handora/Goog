@@ -6,73 +6,80 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
+	"database/sql"
+	"fmt"
+	"os"
 )
 
-const PERPAGE int = 20
+const PER_PAGE int = 20
 
-func GetArticles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get the page argument for pagination
 	pages := r.URL.Query()["page"]
 	var (
 		page int
 		err  error
 	)
+
 	if len(pages) > 0 {
 		page, err = strconv.Atoi(pages[0])
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusBadRequest, "request's page argument error")
 	} else {
 		page = 1
 	}
 
-
+	// select the corresponding articles
 	stmt, err := util.Db.Prepare("SELECT * FROM Article ORDER BY time DESC LIMIT ?, ?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	rows, err := stmt.Query((page-1)*PERPAGE, page*PERPAGE)
-	util.CheckError(err)
+	rows, err := stmt.Query((page-1)*PER_PAGE, page*PER_PAGE)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+	defer rows.Close()
 
 	var (
 		articles []util.Article
 		article  util.Article
 	)
+
+	// scan the rows for all articles
 	for rows.Next() {
 		err = rows.Scan(&article.Id, &article.Title, &article.Content, &article.Time)
-		util.CheckError(err)
-
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
 		articles = append(articles, article)
 	}
 
-	defer rows.Close()
-
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(util.GetOk{Code:http.StatusOK, Text: "Get articles ok", Body: articles}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "Get articles ok", Body: articles}); err != nil {
 		panic(err)
 	}
 }
 
 func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// get the id from request
 	id, err := strconv.Atoi(ps.ByName("id"))
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
+	// get the page if page is empty we just use 1 as page
 	pages := r.URL.Query()["page"]
-	var (
-		page int
-	)
+	var page int
+
 	if len(pages) > 0 {
 		page, err = strconv.Atoi(pages[0])
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusBadRequest, "request's page argument error")
 	} else {
 		page = 1
 	}
 
+	// select corresponding articles
 	stmt, err := util.Db.Prepare("select Article.* from Article,ATrelation " +
 		"where ATrelation.tid=? and ATrelation.aid=Article.id ORDER BY time DESC limit ?, ?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	rows, err := stmt.Query(id, (page-1)*PERPAGE, (page)*PERPAGE)
-	util.CheckError(err)
+	rows, err := stmt.Query(id, (page-1)*PER_PAGE, (page)*PER_PAGE)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+	defer rows.Close()
 
 	var (
 		articles []util.Article
@@ -81,16 +88,14 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	for rows.Next() {
 		err = rows.Scan(&article.Id, &article.Title, &article.Content, &article.Time)
-		util.CheckError(err)
-
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
 		articles = append(articles, article)
 	}
 
-	defer rows.Close()
-
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.GetOk{Code:http.StatusOK, Text: "Get articles ok", Body: articles}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "Get articles ok", Body: articles}); err != nil {
 		panic(err)
 	}
 }
@@ -98,164 +103,176 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	// get the page argument for pagination
 	id, err := strconv.Atoi(ps.ByName("id"))
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
 	var article util.Article
 
-	stmt, err := util.Db.Prepare("select Tag.name from Tag, ATrelation " +
-		"where ATrelation.aid=? and ATrelation.tid=Tag.id")
-	util.CheckError(err)
+	// select corresponding article
+	stmt, err := util.Db.Prepare("select * from Article where Article.id=?")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	tags, err := stmt.Query(id)
-	util.CheckError(err)
+	row := stmt.QueryRow(id)
+	err = row.Scan(&article.Id, &article.Title, article.Content, article.Time)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 
-	for tags.Next() {
-		var tag string
-		tags.Scan(&tag)
-	}
-
-	tags.Close()
-
-	stmt, err = util.Db.Prepare("select * from Article where Article.id=?")
-	util.CheckError(err)
-
-	rows, err := stmt.Query(id)
-	util.CheckError(err)
-
-	ok := false
-
-	for rows.Next() {
-		ok = true
-		rows.Scan(&article.Id, &article.Title, &article.Content, &article.Time)
-	}
-	defer rows.Close()
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	if ok {
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(util.GetOk{Code: http.StatusOK, Text: "Get article ok", Body: article}); err != nil {
-			panic(err)
-		}
-	} else {
+	if err == sql.ErrNoRows {
+		// not found, set the header, and write the statusNotFound with body
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(util.JsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+		if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
 			panic(err)
 		}
+		return
+	} else {
+		// other error
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+		return
+	}
+
+	// set the header, and write the statusOK with body
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get article ok", Body: article}); err != nil {
+		panic(err)
 	}
 }
 
 func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	rb := util.GetRequest{}
-	json.NewDecoder(r.Body).Decode(&rb)
+	rb := struct {
+		Title string
+		Content string
+		Tag []int
+	}{}
 
+	// read the article structure from request body
+	json.NewDecoder(r.Body).Decode(&rb)
 	defer r.Body.Close()
 
+	// insert corresponding articles
 	stmt, err := util.Db.Prepare("insert Article SET title=?,content=?,time=NOW()")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	res, err := stmt.Exec(rb.Title, rb.Content)
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
 	id, err := res.LastInsertId()
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database last insert id error")
 
 	// TODO:
 	//      There may be some improvement through
 	//		adding cache for tags
 	for _, i := range rb.Tag {
+		// check whether tags inside, if doesn't exist just log and continue
 		stmt, err = util.Db.Prepare("select name from Tag where id=?")
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 		row := stmt.QueryRow(i)
-
 		var tmp string
 		err := row.Scan(&tmp)
-		util.CheckError(err)
+		if err == sql.ErrNoRows {
+			fmt.Fprintf(os.Stdout, "Tag id:%d doestn't exist", i)
+			continue
+		} else if err != nil {
+			util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database row.scan error")
+		}
 
+		// insert the relation Table
 		stmt, err = util.Db.Prepare("INSERT ATrelation SET aid=?,tid=?")
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 		_, err = stmt.Exec(id, i)
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 	}
 
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.JsonOk{Code: http.StatusOK, Text: "POST SUCCESSFULLY"}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "POST SUCCESSFULLY"}); err != nil {
 		panic(err)
 	}
 }
 
 func UpdateArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, err := strconv.Atoi(ps.ByName("id"))
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
-	postRequest := util.GetRequest{}
+	// read from request to the postRequest
+	postRequest := struct {
+		Title string
+		Content string
+		Tag []int
+	}{}
 	json.NewDecoder(r.Body).Decode(&postRequest)
+	defer r.Body.Close()
 
+	// update article table and delete the relation table
 	stmt, err := util.Db.Prepare("update Article set title=?,content=?,time=NOW() where id=?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	_, err = stmt.Exec(postRequest.Title, postRequest.Content, id)
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
 	stmt, err = util.Db.Prepare("delete from ATrelation where aid=?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	_, err = stmt.Exec(id)
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
 	// TODO:
 	//      There may be some improvement through
 	//		adding cache for tags
 	for _, i := range postRequest.Tag {
+		// check whether tags inside, if doesn't exist just log and continue
 		stmt, err = util.Db.Prepare("select name from Tag where id=?")
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 		row := stmt.QueryRow(i)
-
 		var tmp string
 		err := row.Scan(&tmp)
-		util.CheckError(err)
+		if err == sql.ErrNoRows {
+			fmt.Fprintf(os.Stdout, "Tag id:%d doestn't exist", i)
+			continue
+		} else if err != nil {
+			util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database row.scan error")
+		}
 
+		// insert the relation Table
 		stmt, err = util.Db.Prepare("INSERT ATrelation SET aid=?,tid=?")
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 		_, err = stmt.Exec(id, i)
-		util.CheckError(err)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 	}
 
+	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.JsonOk{Code: http.StatusOK, Text: "UPDATE SUCCESSFULLY"}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "UPDATE SUCCESSFULLY"}); err != nil {
 		panic(err)
 	}
-
 }
 
-func DeleteArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	id, err := strconv.Atoi(ps.ByName("id"))
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
+	// delete both article and atrelation table
 	stmt, err := util.Db.Prepare("delete from Article where id=?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	_, err = stmt.Exec(id)
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
 	stmt, err = util.Db.Prepare("delete from ATrelation where aid=?")
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	_, err = stmt.Exec(id)
-	util.CheckError(err)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
+	// insert the relation Table
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.JsonOk{Code: http.StatusOK, Text: "DELETE SUCCESSFULLY"}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "DELETE SUCCESSFULLY"}); err != nil {
 		panic(err)
 	}
 }

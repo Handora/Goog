@@ -54,7 +54,11 @@ func main() {
 	util.CheckError(err)
 
 	// construct the post body for posting articles
-	r := util.GetRequest{Title:*title, Content: string(md), Tag: tags}
+	r := struct {
+		Title string
+		Content string
+		Tag []int
+	}{Title:*title, Content: string(md), Tag: tags}
 	jsonVar, err := json.Marshal(r)
 	util.CheckError(err)
 
