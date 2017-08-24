@@ -150,7 +150,7 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	defer r.Body.Close()
 
 	// insert corresponding articles
-	stmt, err := util.Db.Prepare("insert Article SET title=?,index=?,content=?,time=NOW()")
+	stmt, err := util.Db.Prepare("insert Article SET title=?,intro=?,content=?,time=NOW()")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	res, err := stmt.Exec(rb.Title, rb.Intro, rb.Content)
