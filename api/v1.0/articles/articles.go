@@ -9,7 +9,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"regexp"
 )
 
 const PER_PAGE int = 20
