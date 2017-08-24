@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"bufio"
 	"blog/cmd/cmdUtility"
+	"regexp"
 )
 
 func main() {
@@ -53,12 +54,25 @@ func main() {
 	md, err := ioutil.ReadFile(*article)
 	util.CheckError(err)
 
+	// construct the intro
+	re, err := regexp.Compile("<!--intro-->")
+	util.CheckError(err)
+
+	index := re.FindStringIndex(string(md))
+
+	var intro string = ""
+	if index != nil {
+		intro = string(md)[:index[0]]
+	}
+
+
 	// construct the post body for posting articles
 	r := struct {
 		Title string
+		Intro string
 		Content string
 		Tag []int
-	}{Title:*title, Content: string(md), Tag: tags}
+	}{Title:*title, Intro: intro, Content: string(md), Tag: tags}
 	jsonVar, err := json.Marshal(r)
 	util.CheckError(err)
 

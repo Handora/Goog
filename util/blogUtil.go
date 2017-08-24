@@ -28,6 +28,7 @@ type Configuration struct {
 type Article struct {
 	Id      int
 	Title   string
+	Intro	string
 	Content string
 	Time    time.Time
 }

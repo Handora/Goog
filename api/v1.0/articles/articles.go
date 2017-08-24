@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"regexp"
 )
 
 const PER_PAGE int = 20
@@ -43,7 +44,7 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// scan the rows for all articles
 	for rows.Next() {
-		err = rows.Scan(&article.Id, &article.Title, &article.Content, &article.Time)
+		err = rows.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
 		articles = append(articles, article)
 	}
@@ -87,7 +88,7 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&article.Id, &article.Title, &article.Content, &article.Time)
+		err = rows.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
 		articles = append(articles, article)
 	}
@@ -112,7 +113,7 @@ func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	row := stmt.QueryRow(id)
-	err = row.Scan(&article.Id, &article.Title, article.Content, article.Time)
+	err = row.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 
 	if err == sql.ErrNoRows {
@@ -140,6 +141,7 @@ func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	rb := struct {
 		Title string
+		Intro string
 		Content string
 		Tag []int
 	}{}
@@ -149,10 +151,10 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	defer r.Body.Close()
 
 	// insert corresponding articles
-	stmt, err := util.Db.Prepare("insert Article SET title=?,content=?,time=NOW()")
+	stmt, err := util.Db.Prepare("insert Article SET title=?,index=?,content=?,time=NOW()")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	res, err := stmt.Exec(rb.Title, rb.Content)
+	res, err := stmt.Exec(rb.Title, rb.Intro, rb.Content)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
 	id, err := res.LastInsertId()
@@ -199,6 +201,7 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// read from request to the postRequest
 	postRequest := struct {
 		Title string
+		Intro string
 		Content string
 		Tag []int
 	}{}
@@ -206,10 +209,10 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	defer r.Body.Close()
 
 	// update article table and delete the relation table
-	stmt, err := util.Db.Prepare("update Article set title=?,content=?,time=NOW() where id=?")
+	stmt, err := util.Db.Prepare("update Article set title=?,intro=?,content=?,time=NOW() where id=?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	_, err = stmt.Exec(postRequest.Title, postRequest.Content, id)
+	_, err = stmt.Exec(postRequest.Title, postRequest.Intro, postRequest.Content, id)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database exec error")
 
 	stmt, err = util.Db.Prepare("delete from ATrelation where aid=?")

@@ -5,6 +5,7 @@ USE blog;
 CREATE TABLE `Article` (
   `id` int(20) NOT NULL AUTO_INCREMENT,
   `title` varchar(100) DEFAULT NULL,
+  `intro` text,
   `content` text,
   `time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
