@@ -14,6 +14,8 @@ import (
 const PER_PAGE int = 5
 
 func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	defer r.Body.Close()
+
 	// get the page argument for pagination
 	pages, ok := r.URL.Query()["page"]
 	var (
@@ -41,26 +43,39 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database scan error")
 
 	var articles util.PagedArticles
-	articles.Total = count / PER_PAGE
+	articles.Total = (count + PER_PAGE - 1) / PER_PAGE
 	articles.CurrentPage = page
 
 	// select the corresponding articles
 	stmt, err = util.Db.Prepare("SELECT * FROM Article ORDER BY time DESC LIMIT ?, ?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	rows, err := stmt.Query((page-1)*PER_PAGE, page*PER_PAGE)
+	rows, err := stmt.Query((page-1)*PER_PAGE, PER_PAGE)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 	defer rows.Close()
 
-	var (
-		article  util.Article
-		i int
-	)
+	var i int = 0
 
 	// scan the rows for all articles
 	for rows.Next() {
+		var article util.Article
 		err = rows.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+
+		tagStmt, err := util.Db.Prepare("select Tag.* from Tag,ATrelation where ATrelation.aid=? and ATrelation.tid=Tag.id")
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+		tagRows, err := tagStmt.Query(article.Id)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+
+		for tagRows.Next() {
+			var tag util.Tag
+			err = tagRows.Scan(&tag.Id, &tag.Name)
+			util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+
+			article.Tag = append(article.Tag, tag)
+		}
+
 		if i == 0 {
 			articles.First = article
 		} else if i == 1 {
@@ -86,9 +101,10 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	defer r.Body.Close()
+
 	var (
 		articles util.PagedArticles
-		article  util.Article
 		count int
 		i int
 	)
@@ -118,7 +134,7 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	err = row.Scan(&count)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database scan error")
-	articles.Total = count / PER_PAGE
+	articles.Total = (count + PER_PAGE - 1) / PER_PAGE
 	articles.CurrentPage = page
 
 	// select corresponding articles
@@ -126,13 +142,30 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		"where ATrelation.tid=? and ATrelation.aid=Article.id ORDER BY time DESC limit ?, ?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
-	rows, err := stmt.Query(id, (page-1)*PER_PAGE, (page)*PER_PAGE)
+	rows, err := stmt.Query(id, (page-1)*PER_PAGE, PER_PAGE)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 	defer rows.Close()
 
 	for rows.Next() {
+		var article  util.Article
+
 		err = rows.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+
+		tagStmt, err := util.Db.Prepare("select Tag.* from Tag,ATrelation where ATrelation.aid=? and ATrelation.tid=Tag.id")
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+		tagRows, err := tagStmt.Query(article.Id)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+
+		for tagRows.Next() {
+			var tag util.Tag
+			err = tagRows.Scan(&tag.Id, &tag.Name)
+			util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+
+			article.Tag = append(article.Tag, tag)
+		}
+
 		if i == 0 {
 			articles.First = article
 		} else if i == 1 {
@@ -157,7 +190,9 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func GetArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	defer r.Body.Close()
+
 	// get the page argument for pagination
 	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
@@ -171,6 +206,20 @@ func GetArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	row := stmt.QueryRow(id)
 	err = row.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+
+	tagStmt, err := util.Db.Prepare("select Tag.* from Tag,ATrelation where ATrelation.aid=? and ATrelation.tid=Tag.id")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+	tagRows, err := tagStmt.Query(article.Id)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+
+	for tagRows.Next() {
+		var tag util.Tag
+		err = tagRows.Scan(&tag.Id, &tag.Name)
+		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
+
+		article.Tag = append(article.Tag, tag)
+	}
 
 	if err == sql.ErrNoRows {
 		// not found, set the header, and write the statusNotFound with body
@@ -335,3 +384,4 @@ func DeleteArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params)
 		panic(err)
 	}
 }
+
