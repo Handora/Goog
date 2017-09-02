@@ -11,25 +11,41 @@ import (
 	"os"
 )
 
-const PER_PAGE int = 20
+const PER_PAGE int = 5
 
 func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get the page argument for pagination
-	pages := r.URL.Query()["page"]
+	pages, ok := r.URL.Query()["page"]
 	var (
 		page int
 		err  error
+		count int
 	)
 
-	if len(pages) > 0 {
+	if ok {
 		page, err = strconv.Atoi(pages[0])
-		util.CheckAndResponse(w, err, http.StatusBadRequest, "request's page argument error")
+		if err != nil {
+			page = 1
+		}
 	} else {
 		page = 1
 	}
 
+	stmt, err := util.Db.Prepare("SELECT COUNT(*) FROM Article")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+	row := stmt.QueryRow()
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+
+	err = row.Scan(&count)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database scan error")
+
+	var articles util.PagedArticles
+	articles.Total = count / PER_PAGE
+	articles.CurrentPage = page
+
 	// select the corresponding articles
-	stmt, err := util.Db.Prepare("SELECT * FROM Article ORDER BY time DESC LIMIT ?, ?")
+	stmt, err = util.Db.Prepare("SELECT * FROM Article ORDER BY time DESC LIMIT ?, ?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
 	rows, err := stmt.Query((page-1)*PER_PAGE, page*PER_PAGE)
@@ -37,15 +53,28 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	defer rows.Close()
 
 	var (
-		articles []util.Article
 		article  util.Article
+		i int
 	)
 
 	// scan the rows for all articles
 	for rows.Next() {
 		err = rows.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
-		articles = append(articles, article)
+		if i == 0 {
+			articles.First = article
+		} else if i == 1 {
+			articles.Second = article
+		} else if i == 2 {
+			articles.Third = article
+		} else if i == 3 {
+			articles.Fouth = article
+		} else if i == 4 {
+			articles.Fifth = article
+		} else {
+			panic("something error about rows scan")
+		}
+		i++
 	}
 
 	// set the header, and write the statusOK with body
@@ -57,23 +86,43 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var (
+		articles util.PagedArticles
+		article  util.Article
+		count int
+		i int
+	)
+
 	// get the id from request
 	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
 	// get the page if page is empty we just use 1 as page
-	pages := r.URL.Query()["page"]
+	pages, ok := r.URL.Query()["page"]
 	var page int
 
-	if len(pages) > 0 {
+	if ok {
 		page, err = strconv.Atoi(pages[0])
 		util.CheckAndResponse(w, err, http.StatusBadRequest, "request's page argument error")
 	} else {
 		page = 1
 	}
 
+	// query the num of count
+	stmt, err := util.Db.Prepare("select Count(*) from Article,ATrelation " +
+		"where ATrelation.tid=? and ATrelation.aid=Article.id")
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
+
+	row := stmt.QueryRow(id)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
+
+	err = row.Scan(&count)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database scan error")
+	articles.Total = count / PER_PAGE
+	articles.CurrentPage = page
+
 	// select corresponding articles
-	stmt, err := util.Db.Prepare("select Article.* from Article,ATrelation " +
+	stmt, err = util.Db.Prepare("select Article.* from Article,ATrelation " +
 		"where ATrelation.tid=? and ATrelation.aid=Article.id ORDER BY time DESC limit ?, ?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
 
@@ -81,15 +130,23 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 	defer rows.Close()
 
-	var (
-		articles []util.Article
-		article  util.Article
-	)
-
 	for rows.Next() {
 		err = rows.Scan(&article.Id, &article.Title, &article.Intro, &article.Content, &article.Time)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
-		articles = append(articles, article)
+		if i == 0 {
+			articles.First = article
+		} else if i == 1 {
+			articles.Second = article
+		} else if i == 2 {
+			articles.Third = article
+		} else if i == 3 {
+			articles.Fouth = article
+		} else if i == 4 {
+			articles.Fifth = article
+		} else {
+			panic("something error about rows scan")
+		}
+		i++
 	}
 
 	// set the header, and write the statusOK with body
