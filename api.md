@@ -1,12 +1,12 @@
 # API文档
 #写得比较简陋不要在意<br>
 #你可以先测试起来<br><br>
-// 获得page内的的文章,通过query里的page来确定页数(若没有page，那么视为page=1)，下文有详解,得到的所有文章都必须在通过之后的Get Tags Through Articles来获得相应的Tags，可能这样速度会很慢，之后的版本会相应改变方法,记住，不管是传json还是接受json都必须是首字母大写如下文所示：<br>
+// 获得page内的的文章,通过query里的page来确定页数(若没有page，那么视为page=1)<br />
 **Get Articles(20/per request) :**
 ```javascript
-url: '../api/v1.0/articles?page=(page)'
+url: '118.89.182.24/articles?page=(page)'
 method: GET
-args: 
+query:
 	page // the articles between (page-1)*20 
          // to page*20 will be returned to you
          // this is a query argument
