@@ -30,6 +30,7 @@ type Article struct {
 	Title   string
 	Intro	string
 	Content string
+	Tag     []Tag
 	Time    time.Time
 }
 
