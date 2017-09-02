@@ -33,6 +33,17 @@ type Article struct {
 	Time    time.Time
 }
 
+// paged articles structure for json
+type PagedArticles struct {
+	First Article `json:"0"`
+	Second Article `json:"1"`
+	Third Article `json:"2"`
+	Fouth Article `json:"3"`
+	Fifth Article `json:"id"`
+	Total int
+	CurrentPage int
+}
+
 // tag structure
 type Tag struct {
 	Id int

@@ -1,0 +1,5 @@
+package query
+
+func query() {
+
+}
