@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"blog/api/v1.0/timeline"
 )
 
 func main() {
@@ -47,6 +48,11 @@ func main() {
 	router.GET("/articles/:id/tags", tags.GetTagByArticle)
 	router.POST("/tags", tags.PostTag)
 	router.DELETE("/tags/:id", tags.DeleteTag)
+
+	router.GET("/timeline", timeline.GetTimeline)
+	router.POST("/timeline", timeline.PostTimeline)
+	router.PATCH("/timeline/:id", timeline.UpdateTimeline)
+	router.DELETE("/timeline/:id", timeline.DeleteTimeline)
 
 	// Now start the server
 	log.Fatal(http.ListenAndServe(":8080", router))

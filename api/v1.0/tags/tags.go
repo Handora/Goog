@@ -15,7 +15,9 @@ import (
 	May be we can create an Article id list to
 	return tag, and it may be more effective
 */
-func GetTagByArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func GetTagByArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	defer r.Body.Close()
+
 	// get article id from request
 	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
@@ -25,18 +27,15 @@ func GetTagByArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Param
 	stmt, err := util.Db.Prepare("select Tag.* from Tag,ATrelation " +
 		"where ATrelation.aid=? and ATrelation.tid=Tag.id")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
-	// query
 	rows, err := stmt.Query(id)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 	defer rows.Close()
 
-	var (
-		tag util.Tag
-		tags []util.Tag
-	)
+	var tags []util.Tag
 
 	// construct the tags
 	for rows.Next() {
+		var tag util.Tag
 		err := rows.Scan(&tag.Id, &tag.Name)
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database rows.scan error")
 		tags = append(tags, tag)
@@ -50,7 +49,9 @@ func GetTagByArticle(w http.ResponseWriter, _ *http.Request, ps httprouter.Param
 	}
 }
 
-func GetTags(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+func GetTags(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	defer r.Body.Close()
+
 	// query all tags from db
 	rows, err := util.Db.Query("select * from Tag")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
@@ -82,7 +83,9 @@ func GetTags(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	May be we can create a Tag id list to
 	return tag, and it may be more effective
 */
-func GetTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func GetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	defer r.Body.Close()
+
 	var (
 		id int
 		tag util.Tag
@@ -95,10 +98,8 @@ func GetTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	// select corresponding Tg
 	stmt, err := util.Db.Prepare("select * from Tag where id=?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
-
 	// just find one row, because id is unique
 	row := stmt.QueryRow(id)
-
 	err = row.Scan(&tag.Id, &tag.Name)
 
 	if err == sql.ErrNoRows {
@@ -125,6 +126,8 @@ func GetTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 }
 
 func PostTag(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	defer r.Body.Close()
+
 	tag := struct {
 		Name string
 	}{}
@@ -154,7 +157,9 @@ func PostTag(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	May be we can create an tag id list to
 	delete all, and it may be more effective
  */
-func DeleteTag(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func DeleteTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	defer r.Body.Close()
+
 	// read id from request
 	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
