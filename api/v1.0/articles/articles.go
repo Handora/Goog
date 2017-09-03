@@ -197,7 +197,7 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 func GetArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	defer r.Body.Close()
 
-	// get the page argument for pagination
+	// get the id argument for find
 	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 

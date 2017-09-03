@@ -58,6 +58,7 @@ type Timeline struct {
 }
 
 type Event struct {
+	Id     int
 	Months int
 	Times  time.Time
 	Even  string

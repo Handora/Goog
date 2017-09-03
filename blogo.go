@@ -51,6 +51,8 @@ func main() {
 
 	router.GET("/timeline", timeline.GetTimeline)
 	router.POST("/timeline", timeline.PostTimeline)
+	router.PATCH("/timeline/:id", timeline.UpdateTimeline)
+	router.DELETE("/timeline/:id", timeline.DeleteTimeline)
 
 	// Now start the server
 	log.Fatal(http.ListenAndServe(":8080", router))
