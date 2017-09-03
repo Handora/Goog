@@ -51,6 +51,18 @@ type Tag struct {
 	Name string
 }
 
+// timeline structure
+type Timeline struct {
+	Year int
+	Events []Event
+}
+
+type Event struct {
+	Months int
+	Times  time.Time
+	Even  string
+}
+
 // unified structure for response structure
 type Response struct {
 	Code int

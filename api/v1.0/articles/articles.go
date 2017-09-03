@@ -257,7 +257,8 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}{}
 
 	// read the article structure from request body
-	json.NewDecoder(r.Body).Decode(&rb)
+	err := json.NewDecoder(r.Body).Decode(&rb)
+	util.CheckAndResponse(w, err, http.StatusInternalServerError, "request body json error")
 
 	// insert corresponding articles
 	stmt, err := util.Db.Prepare("insert Article SET title=?,intro=?,content=?,time=NOW()")
