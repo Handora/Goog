@@ -26,12 +26,12 @@ type Configuration struct {
 
 // article structure
 type Article struct {
-	Id      int
-	Title   string
-	Intro	string
-	Content string
-	Tag     []Tag
-	Time    time.Time
+	Id      int     `json:"id"`
+	Title   string  `json:"title"`
+	Intro	string  `json:"intro"`
+	Content string  `json:"content"`
+	Tag     []Tag  `json:"tag"`
+	Time    time.Time `json:"time"`
 }
 
 // paged articles structure for json
@@ -40,28 +40,28 @@ type PagedArticles struct {
 	Second Article `json:"1"`
 	Third Article `json:"2"`
 	Fouth Article `json:"3"`
-	Fifth Article `json:"id"`
-	Total int
-	CurrentPage int
+	Fifth Article `json:"4"`
+	Total int  `json:"total"`
+	CurrentPage int `json:"currentPage"`
 }
 
 // tag structure
 type Tag struct {
-	Id int
-	Name string
+	Id int `json:"id"`
+	Name string `json:"name"`
 }
 
 // timeline structure
 type Timeline struct {
-	Year int
-	Events []Event
+	Year int `json:"year"`
+	Events []Event `json:"events"`
 }
 
 type Event struct {
-	Id     int
-	Months int
-	Times  time.Time
-	Even  string
+	Id     int `json:"id"`
+	Months int `json:"months"`
+	Times  time.Time `json:"times"`
+	Even  string `json:"even"`
 }
 
 // unified structure for response structure
@@ -82,6 +82,8 @@ func CheckAndResponse(w http.ResponseWriter, err error, statusCode int, message 
 	if err != nil {
 		// not found, set the header, and write the statusNotFound with body
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 		w.WriteHeader(http.StatusNotFound)
 
 		if err := json.NewEncoder(w).Encode(Response{Code:statusCode, Text: message}); err != nil {
