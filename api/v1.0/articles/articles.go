@@ -98,8 +98,8 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	// set the header, and write the statusOK with body
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get paged articles successfully", Body: articles}); err != nil {
@@ -190,6 +190,8 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get required articles successfully", Body: articles}); err != nil {
 		panic(err)
@@ -215,6 +217,8 @@ func GetArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if err == sql.ErrNoRows {
 		// not found, set the header, and write the statusNotFound with body
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
 			panic(err)
@@ -242,6 +246,8 @@ func GetArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get required article successfully", Body: article}); err != nil {
 		panic(err)
@@ -297,6 +303,8 @@ func PostArticle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "POST SUCCESSFULLY"}); err != nil {
 		panic(err)
@@ -356,6 +364,8 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "UPDATE SUCCESSFULLY"}); err != nil {
 		panic(err)
@@ -381,6 +391,8 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 	// insert the relation Table
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "DELETE SUCCESSFULLY"}); err != nil {
 		panic(err)

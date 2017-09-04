@@ -43,6 +43,8 @@ func GetTagByArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "GET tags through article id successfully", Body: tags}); err != nil {
 		panic(err)
@@ -71,6 +73,8 @@ func GetTags(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "Get all tags successfully", Body: tags}); err != nil {
 		panic(err)
@@ -105,6 +109,8 @@ func GetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if err == sql.ErrNoRows {
 		// not found, set the header, and write the statusNotFound with body
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusNotFound, Text: "Tag not found"}); err != nil {
 			panic(err)
@@ -119,6 +125,8 @@ func GetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// err == nil
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get tags ok", Body: tag}); err != nil {
 		panic(err)
@@ -145,6 +153,8 @@ func PostTag(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Post tag ok"}); err != nil {
 		panic(err)
@@ -179,6 +189,8 @@ func DeleteTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "DELETE tags ok"}); err != nil {
 		panic(err)

@@ -37,6 +37,8 @@ func GetTimeline(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get paged articles successfully", Body: timelines}); err != nil {
 		panic(err)
@@ -59,6 +61,8 @@ func PostTimeline(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "POST SUCCESSFULLY"}); err != nil {
 		panic(err)
@@ -85,6 +89,8 @@ func UpdateTimeline(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "UPDATE SUCCESSFULLY"}); err != nil {
 		panic(err)
@@ -104,6 +110,8 @@ func DeleteTimeline(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 
 	// set the header, and write the statusOK with body
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "DELETE SUCCESSFULLY"}); err != nil {
 		panic(err)
