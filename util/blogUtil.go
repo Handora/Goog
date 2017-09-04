@@ -10,6 +10,7 @@ import (
 	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
 	"net/http"
+	"net/rpc"
 )
 
 // global db for all sql usage
@@ -41,8 +42,6 @@ type PagedArticles struct {
 	Third Article `json:"2"`
 	Fouth Article `json:"3"`
 	Fifth Article `json:"4"`
-	Total int  `json:"total"`
-	CurrentPage int `json:"currentPage"`
 }
 
 // tag structure
@@ -69,6 +68,14 @@ type Response struct {
 	Code int
 	Text string
 	Body interface{}
+}
+
+type ArticlesResponse struct {
+	Code int
+	Text string
+	Body interface{}
+	Total int  `json:"total"`
+	CurrentPage int `json:"currentPage"`
 }
 
 // just check error, and if error, we panic

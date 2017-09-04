@@ -44,10 +44,6 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	err = row.Scan(&count)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database scan error")
 
-	// set the articles.total to ROUNDUP(count/PER_PAGE)
-	articles.Total = (count + PER_PAGE - 1) / PER_PAGE
-	articles.CurrentPage = page
-
 	// select the corresponding articles
 	stmt, err = util.Db.Prepare("SELECT * FROM Article ORDER BY time DESC LIMIT ?, ?")
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database prepare error")
@@ -102,7 +98,9 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get paged articles successfully", Body: articles}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.ArticlesResponse{Code: http.StatusOK,
+		                                Text: "Get paged articles successfully", Body: articles,
+		                                Total: (count + PER_PAGE - 1) / PER_PAGE, CurrentPage: page}); err != nil {
 		panic(err)
 	}
 }
@@ -138,10 +136,6 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database query error")
 	err = row.Scan(&count)
 	util.CheckAndResponse(w, err, http.StatusInternalServerError, "Database scan error")
-
-	// set the articles.total to ROUNDUP(count/PER_PAGE)
-	articles.Total = (count + PER_PAGE - 1) / PER_PAGE
-	articles.CurrentPage = page
 
 	// select corresponding articles
 	stmt, err = util.Db.Prepare("select Article.* from Article,ATrelation " +
@@ -193,7 +187,9 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get required articles successfully", Body: articles}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.ArticlesResponse{Code: http.StatusOK,
+		Text: "Get paged articles successfully", Body: articles,
+		Total: (count + PER_PAGE - 1) / PER_PAGE, CurrentPage: page}); err != nil {
 		panic(err)
 	}
 }
