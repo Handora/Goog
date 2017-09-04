@@ -98,7 +98,9 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	// set the header, and write the statusOK with body
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get paged articles successfully", Body: articles}); err != nil {
 		panic(err)
