@@ -1,14 +1,13 @@
 package tags
 
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
 	"blog/util"
-	"encoding/json"
-	"strconv"
 	"database/sql"
+	"encoding/json"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
+	"strconv"
 )
-
 
 /*
 	TODO:
@@ -46,7 +45,7 @@ func GetTagByArticle(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "GET tags through article id successfully", Body: tags}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "GET tags through article id successfully", Body: tags}); err != nil {
 		panic(err)
 	}
 }
@@ -60,7 +59,7 @@ func GetTags(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	defer rows.Close()
 
 	var (
-		tag util.Tag
+		tag  util.Tag
 		tags []util.Tag
 	)
 
@@ -76,11 +75,10 @@ func GetTags(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusOK, Text: "Get all tags successfully", Body: tags}); err != nil {
+	if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusOK, Text: "Get all tags successfully", Body: tags}); err != nil {
 		panic(err)
 	}
 }
-
 
 /*
 	TODO:
@@ -91,7 +89,7 @@ func GetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	defer r.Body.Close()
 
 	var (
-		id int
+		id  int
 		tag util.Tag
 	)
 
@@ -112,7 +110,7 @@ func GetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(util.Response{Code:http.StatusNotFound, Text: "Tag not found"}); err != nil {
+		if err := json.NewEncoder(w).Encode(util.Response{Code: http.StatusNotFound, Text: "Tag not found"}); err != nil {
 			panic(err)
 		}
 		return
@@ -161,12 +159,11 @@ func PostTag(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
-
 /*
 	TODO:
 	May be we can create an tag id list to
 	delete all, and it may be more effective
- */
+*/
 func DeleteTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	defer r.Body.Close()
 

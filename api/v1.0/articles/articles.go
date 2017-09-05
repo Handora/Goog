@@ -99,8 +99,9 @@ func GetArticles(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.ArticlesResponse{Code: http.StatusOK,
-		                                Text: "Get paged articles successfully", Body: articles,
-		                                Total: (count + PER_PAGE - 1) / PER_PAGE, CurrentPage: page}); err != nil {
+		Text: "Get paged articles successfully", Body: articles,
+		Total: (count + PER_PAGE - 1) / PER_PAGE, CurrentPage: page,
+		Length: i}); err != nil {
 		panic(err)
 	}
 }
@@ -112,7 +113,7 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		articles util.PagedArticles
 		count    int
 		i        int
-		page int
+		page     int
 	)
 
 	// get the id from request
@@ -189,7 +190,8 @@ func GetArticleByTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(util.ArticlesResponse{Code: http.StatusOK,
 		Text: "Get paged articles successfully", Body: articles,
-		Total: (count + PER_PAGE - 1) / PER_PAGE, CurrentPage: page}); err != nil {
+		Total: (count + PER_PAGE - 1) / PER_PAGE, CurrentPage: page,
+		Length: i}); err != nil {
 		panic(err)
 	}
 }

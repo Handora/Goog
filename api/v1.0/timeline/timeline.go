@@ -1,12 +1,12 @@
 package timeline
 
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
 	"blog/util"
-	"time"
 	"encoding/json"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
 	"strconv"
+	"time"
 )
 
 const START_YEAR = 2017
@@ -20,8 +20,8 @@ func GetTimeline(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	var timelines []util.Timeline
 
-	for i:=START_YEAR; i<=time.Now().Year(); i++ {
-		timeline := util.Timeline{Year:i}
+	for i := START_YEAR; i <= time.Now().Year(); i++ {
+		timeline := util.Timeline{Year: i}
 		timelines = append(timelines, timeline)
 	}
 
@@ -32,7 +32,7 @@ func GetTimeline(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		util.CheckAndResponse(w, err, http.StatusInternalServerError, "database scan error")
 		event.Months = int(event.Times.Month())
 
-		timelines[time.Now().Year() - START_YEAR].Events = append(timelines[time.Now().Year() - START_YEAR].Events, event)
+		timelines[time.Now().Year()-START_YEAR].Events = append(timelines[time.Now().Year()-START_YEAR].Events, event)
 	}
 
 	// set the header, and write the statusOK with body
@@ -48,7 +48,7 @@ func GetTimeline(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func PostTimeline(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	defer r.Body.Close()
 
-	var event struct{
+	var event struct {
 		Event string
 	}
 	err := json.NewDecoder(r.Body).Decode(&event)
@@ -76,7 +76,7 @@ func UpdateTimeline(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	id, err := strconv.Atoi(ps.ByName("id"))
 	util.CheckAndResponse(w, err, http.StatusBadRequest, "request's id argument error")
 
-	var event struct{
+	var event struct {
 		Event string
 	}
 	err = json.NewDecoder(r.Body).Decode(&event)

@@ -2,11 +2,11 @@ package main
 
 import (
 	"blog/util"
-	"net/http"
 	"encoding/json"
-	"fmt"
-	"os"
 	"flag"
+	"fmt"
+	"net/http"
+	"os"
 )
 
 func main() {

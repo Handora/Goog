@@ -1,14 +1,14 @@
 package main
 
 import (
+	"blog/util"
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
-	"bufio"
-	"encoding/json"
-	"blog/util"
 	"net/http"
-	"bytes"
+	"os"
 )
 
 func main() {

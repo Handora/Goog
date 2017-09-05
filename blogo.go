@@ -3,6 +3,7 @@ package main
 import (
 	"blog/api/v1.0/articles"
 	"blog/api/v1.0/tags"
+	"blog/api/v1.0/timeline"
 	"blog/util"
 	"flag"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"blog/api/v1.0/timeline"
 )
 
 func main() {

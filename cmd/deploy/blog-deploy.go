@@ -1,18 +1,18 @@
 package main
 
 import (
-	"flag"
-	"strings"
-	"fmt"
-	"os"
-	"net/http"
-	"blog/util"
-	"encoding/json"
-	"bytes"
-	"io/ioutil"
-	"bufio"
 	"blog/cmd/cmdUtility"
+	"blog/util"
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"regexp"
+	"strings"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// if the file is not ends with md, we should panic
-	if ! strings.HasSuffix(*article, ".md") {
+	if !strings.HasSuffix(*article, ".md") {
 		fmt.Fprintln(os.Stdout, "the Article flag must ends with '.md'")
 		os.Exit(1)
 	}
@@ -65,14 +65,13 @@ func main() {
 		intro = string(md)[:index[0]]
 	}
 
-
 	// construct the post body for posting articles
 	r := struct {
-		Title string
-		Intro string
+		Title   string
+		Intro   string
 		Content string
-		Tag []int
-	}{Title:*title, Intro: intro, Content: string(md), Tag: tags}
+		Tag     []int
+	}{Title: *title, Intro: intro, Content: string(md), Tag: tags}
 	jsonVar, err := json.Marshal(r)
 	util.CheckError(err)
 

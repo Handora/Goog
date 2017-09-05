@@ -1,19 +1,19 @@
 package cmdUtility
 
 import (
-	"fmt"
-	"os"
-	"bufio"
 	"blog/util"
-	"net/http"
+	"bufio"
 	"encoding/json"
-	"strings"
+	"fmt"
+	"net/http"
+	"os"
 	"strconv"
+	"strings"
 )
 
 /*
 	an implementation for flag to receive several arguments
- */
+*/
 type ArrayFlags []int
 
 // Value ...
